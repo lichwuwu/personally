@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Game</title>
+  <style>
+    body,html{
+      margin: 0;
+      padding: 0;
+      background-color: #6f6e6e;
+      min-width: 1200px;
+    }
+     #stage {
+      letter-spacing: 0.5em;
+      margin: auto;
+    }
+    table{
+      border-collapse: collapse;
+      border: 1px solid rgb(0, 0, 0);
+    }
+    td{
+      font-size: 0;
+      width: 20px;
+      height: 20px;
+      min-width: 10px;
+      border: 1px solid rgb(98, 98, 98);
+      color: rgba(0, 0, 0,.5);
+      background-color:rgba(0, 0, 0,.5);
+
+    }
+    .addsnake{
+      background-color: rgb(209, 52, 52);
+      color: rgb(209, 52, 52);
+    }
+    .addApple{
+      background-color: rgb(0, 255, 0);
+      color: rgb(0, 255, 0);
+    }
+    main{
+      display: flex;
+      justify-content: center;
+      position: relative;
+      >div{
+        text-align: center;
+        position: absolute;
+        width: 200px;
+        height: 100px;
+        background-color: aqua;
+
+        display: none;
+        > p{
+          padding: 0;
+          margin: 0;
+        }
+      }
+    }
+    h1{
+      margin: 0 0 10px 0;
+      padding: 40px 0 20px 10px;
+      font-size: 50px;
+      font-style: italic;
+      color: rgb(224, 224, 224);
+      background-color: black;
+    }
+    section{
+      position: fixed;
+      padding: 20px 0 60px 0;
+
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      color: wheat;
+      background-color: #020202;
+      gap: 20px;
+      >span{
+        text-align: center;
+        line-height: 30px;
+        width: 100px;
+        border-radius: 99px;
+        outline: none;
+        background: rgb(52, 54, 207);
+        cursor: pointer;
+
+      }
+      > *{
+        height: 30px;
+      }
+      > select{
+        width: 100px;
+        border-radius: 99px;
+        color: wheat;
+        background-color: rgb(52, 54, 207);
+      }
+      >div{
+        padding: 0;
+        margin: 0;
+        background-color: #838383;
+        width: 120px;
+        line-height: 30px;
+        >p{
+          display: inline-block;
+          padding: 0;
+          margin: 0;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    Snake Game
+  </h1>
+  <main>
+    <div id="over">
+      游戏结束
+      <br>
+      <p id="score"></p>
+      <p id="xxx"></p>
+    </div>
+    <pre id="stage"></pre>
+
+  </main>
+  <section>
+    <span onclick=" a = true; beginGame()">开始游戏</span>
+    <span onclick="newGame()">重新开始</span>
+    <select name="" id="">
+      <option value="600" >简单</option>
+      <option value="300">中等</option>
+      <option value="150">困难</option>
+    </select>
+    <div>最高分：<p id="maxScore">0</p></div>
+  </section>
+  <script>
+    var a = false
+    var max = 0
+    class Snake{
+      constructor(width = 30,height =20){
+        this.width = width
+        this.height = height
+        this.score = 0
+        this.world = new Array(this.height).fill(0).map(it => new Array(this.width).fill("."))
+        this.head = [this.width / 3 | 0,this.height / 3 | 0]
+        this.tail = this.head
+        var [x,y] = this.head
+        this.world[y][x] = ">"
+        this.placeApple()
+      }
+      placeApple(){
+        while(true){
+          var x = this.width * Math.random() | 0
+          var y = this.height * Math.random() | 0
+          if(this.world[y][x] == "."){
+            this.world[y][x] = "O"
+            return
+          }
+        }
+
+      }
+      judgeGameOver([x,y]){
+        if(x < 0 || x >= this.width){
+          return true
+        }
+        if(y < 0 || y >= this.height){
+          return true
+        }
+        if(this.world[y][x] !== "." && this.world[y][x] !== "O"){
+          return true
+        }
+        return false
+      }
+      next(){
+        var [hx,hy] = this.head
+        var headDirection = this.world[hy][hx]
+        if(headDirection == "^"){
+          var [x,y] = [hx,hy -1]
+        }
+        if(headDirection == ">"){
+          var [x,y] = [hx + 1,hy]
+        }
+        if(headDirection == "<"){
+          var [x,y] = [hx -1,hy]
+        }
+        if(headDirection == "v"){
+          var [x,y] = [hx,hy + 1]
+        }
+        if(this.judgeGameOver([x,y])){
+          return 'gameover'
+        }
+        if(this.world[y][x] == "O"){
+          this.world[y][x] = headDirection
+          this.head = [x,y]
+          this.score++
+          this.placeApple()
+          return
+        }
+        this.world[y][x] = headDirection
+        this.head = [x,y]
+
+        var [tx,ty] = this.tail
+        var tailDirection = this.world[ty][tx]
+        if(tailDirection == "^"){
+          var [x,y] = [tx,ty -1]
+        }
+        if(tailDirection == ">"){
+          var [x,y] = [tx + 1,ty]
+        }
+        if(tailDirection == "<"){
+          var [x,y] = [tx -1,ty]
+        }
+        if(tailDirection == "v"){
+          var [x,y] = [tx,ty + 1]
+        }
+        this.tail = [x,y]
+        this.world[ty][tx] = "."
+      }
+      setSnakeDirection(direction){
+        var [x,y] = this.head
+        var currentDirection = this.world[y][x]
+        if(currentDirection == ">" || currentDirection == "<" ){
+          if(direction == "^" || direction == "v"){
+            this.world[y][x] = direction
+            this.next()
+          }
+        }else{
+          if(direction == "<" || direction == ">"){
+            this.world[y][x] = direction
+            this.next()
+          }
+        }
+        if(direction == currentDirection){
+          this.next()
+        }
+      }
+      addClass(cell){
+        if(cell !== "." && cell !== "O"){
+          return `class="addsnake"`
+        }else if(cell == "O"){
+          return `class="addApple"`
+        }else{
+          return null
+        }
+      }
+      renderToHTMLTable(){
+        return `<table>${this.world.map(row =>{
+          return `<tr>${row.map(cell =>{
+            return `<td ${this.addClass(cell)}>${cell}</td>`
+          }).join("")}</tr>`
+        }).join("")}</table>`
+      }
+    }
+    var game = new Snake()
+    var intervalId
+    var select = document.querySelector("select")
+    var nd = 800
+
+    select.addEventListener("change",e=>{
+      nd = Number(e.target.value)
+      console.log(nd);
+    })
+    show()
+    var tds = document.querySelectorAll("td")
+    function beginGame(){
+      if(a){
+        auto()
+      }
+    }
+
+    function next(){
+      var result = game.next()
+
+      show()
+
+      if(result == "gameover"){
+        score.textContent = "得分：" + game.score
+        if(game.score > max){
+          max = game.score
+        }
+        maxScore.textContent = ""
+        maxScore.textContent = max
+        over.style.display = "block"
+
+        if(game.score == 599 ){
+          xxx.textContent = "完美通关!!!"
+        }else if(game.score > 499){
+          xxx.textContent = "你真牛!!!"
+        }else if(game.score > 299){
+          xxx.textContent = "你真棒!!!"
+        }else if(game.score > 199){
+          xxx.textContent = "很棒!!!"
+        }else if(game.score > 99){
+          xxx.textContent = "很厉害!!!"
+        }else if(game.score > 10){
+          xxx.textContent = "厉害!!!"
+        }else{
+          xxx.textContent = "再接再厉!"
+        }
+        clearInterval(intervalId)
+        a = false
+        beginGame()
+      }
+    }
+    function show(){
+      stage.innerHTML = game.renderToHTMLTable()
+
+    }
+    function auto(){
+      intervalId = setInterval(()=>{
+       next()
+      },nd)
+
+    }
+    function newGame(){
+      game = new Snake()
+      over.style.display = "none"
+      show()
+      clearInterval(intervalId)
+      a = false
+      beginGame()
+    }
+
+    function stop(){
+      clearInterval(intervalId)
+    }
+    document.body.addEventListener("keydown", function(e){
+      if(a){
+
+        if(e.key == "ArrowUp"){
+          game.setSnakeDirection("^")
+          stop()
+          show()
+          auto()
+        }else if(e.key == "ArrowDown"){
+          game.setSnakeDirection("v")
+          stop()
+          show()
+          auto()
+        }else if(e.key == "ArrowLeft"){
+          game.setSnakeDirection("<")
+          stop()
+          show()
+          auto()
+
+        }else if(e.key == "ArrowRight"){
+          game.setSnakeDirection(">")
+          stop()
+          show()
+          auto()
+        }
+
+      }
+      e.preventDefault()
+    })
+
+
+  </script>
+</body>
+</html>
