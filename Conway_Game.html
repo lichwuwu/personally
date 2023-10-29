@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>conway game</title>
+  <style>
+    html,body{
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      background: rgb(64,64,64);
+    }
+    h1{
+      background-color: #b0d3ff;
+      margin: 0 0 10px 0;
+      padding: 50px 0 10px 30px ;
+      font-size: 50px;
+    }
+    .alive{
+      background: #0b08e9;
+    }
+    table{
+      border-collapse: collapse;
+      & td {
+        border: 1px solid rgb(0, 0, 0);
+        width: 10px;
+        height: 10px;
+        min-width: 10px;
+        background: gray;
+      }
+    }
+    section{
+      width: 100%;
+      display: flex;
+      margin: 0 0 10px 0;
+      >.stage{
+        border: black 1px solid;
+        margin: auto;
+        justify-content: center;
+      }
+
+    }
+    main{
+      color: white;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      >input{
+        width: 60px;
+
+        padding: 0;
+        margin: 0;
+        display: inline-block;
+      }
+      >span{
+
+        display: inline-block;
+        border-radius: 99px;
+        background: rgb(42,78,151);
+        width: 90px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>CONWAY GAME</h1>
+  <section>
+    <div class="stage">
+      
+    </div>
+  </section>
+  <main>
+    <span onclick="random()">random</span>
+    <span onclick="next()">next</span>
+    <input type="number" name="" id="duration" value="200" step="50">
+    <span  onclick="automatic(this)">开始演化</span style="border-radius: 99px;">
+    <span onclick="empty()">清空</span>
+    <input type="number" id="stageHeight" value="100" step="10">×<input value="20" type="number" id="stageWidth" step="10">
+    <span onclick="changeStageSize()">确定</span>
+  </main>
+  <p id="p"></p>
+  <script>
+    class ConwayGame{
+      constructor(width = 20,height = 20){
+        this.worldWidth = width
+        this.worldHeight = height
+        this.world =  this._createEmptyWorld()
+      }
+      _createEmptyWorld(){
+        return new Array(this.worldHeight).fill(0).map(it => new Array(this.worldWidth).fill(0))
+      }
+      randomSeed(rad = 0.35){
+        for(var c = 0 ;c<this.world.length;c++){
+          for(var r = 0;r < this.worldWidth;r++){
+            if(Math.random() < rad){
+              this.world[c][r] = 1
+            }
+          }
+        }
+      }
+      next(){
+        var newWorld = this._createEmptyWorld()
+        for(var row = 0 ;row < this.world.length;row++){
+          for(var col = 0 ;col < this.world[row].length;col++){
+            var current = this.world[row][col]
+            var neighbours = -current
+
+            for(var r = row - 1;r <= row + 1;r++){
+              for(var c = col - 1;c <= col + 1;c++){
+                neighbours += this.world[r]?.[c] ?? 0
+              }
+            }
+            if(current == 1){
+              if(neighbours >= 2 && neighbours <= 3){
+               newWorld[row][col] = 1
+              }
+            }else{
+              if(neighbours == 3){
+               newWorld[row][col] = 1
+              }
+            }
+          }
+        }
+        this.world = newWorld
+      }
+      renderToHTMLTable(){
+        return `<table>
+            ${this.world.map((row,rowIdx)=>{
+              return `<tr>${row.map((cell,colIdx)=>{
+                if(cell == 1){
+                  return `<td data-row="${rowIdx}" data-col="${colIdx}" class="alive"></td>`
+                }else{
+                  return `<td data-row="${rowIdx}" data-col="${colIdx}"></td>`
+                }
+              }).join("")}</tr>`
+            }).join("")}
+          </table>`
+      }
+      set(col,row,alive = 1){
+        if(col <this.worldWidth && row < this.worldHeight){
+          this.world[row][col] = alive
+        }
+        return this
+      }
+
+    }
+    var stage = document.querySelector(".stage")
+    var game = new ConwayGame(100,30)
+    stage.addEventListener("click",function(e){
+      if(e.target.matches("td")){
+        var td = e.target
+        var col = Number(td.dataset.col)
+        var row = Number(td.dataset.row)
+        td.classList.toggle("alive")
+        game.set(col, row, Number(td.classList.contains('alive')))
+      }
+    })
+    function next(){
+      game.next()
+      stage.innerHTML = game.renderToHTMLTable()
+    }
+    function random(){
+      game.randomSeed()
+      stage.innerHTML = game.renderToHTMLTable()
+    }
+    var running = false
+    var intervalId
+    function automatic(el){
+
+      if(running == false){
+        var start = Date.now()
+        running = true
+        el.textContent = "停止演化"
+        intervalId = setInterval(()=>{
+          next()
+        },duration.value)
+      }else{
+        running = false
+        el.textContent = "开始演化"
+        clearInterval(intervalId)
+      }
+    }
+    duration.addEventListener("input",function(e){
+      if(duration.value == "0"){
+        duration.value = "16"
+      }
+      if(running){
+        clearInterval(intervalId)
+        intervalId = setInterval(() => {
+          next()
+        }, duration.value);
+      }
+    })
+    function empty(){
+     var empty = game._createEmptyWorld()
+     game.world = empty
+     stage.innerHTML = game.renderToHTMLTable()
+    }
+    stageWidth.value = game.worldWidth
+    stageHeight.value = game.worldHeight
+    stage.innerHTML = game.renderToHTMLTable()
+    function changeStageSize(){
+      game = new ConwayGame(+stageWidth.value,+stageHeight.value)
+      next()
+    }
+
+    stage.innerHTML = game.renderToHTMLTable()
+  </script>
+</body>
+</html>
