@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    html,body{
+      width: 100%;
+      height: 100%;
+
+    }
+    main{
+      margin: auto;
+      width: max-content;
+      position: relative;
+      background-color: black;
+      >section{
+        color: white;
+        height: 30px;
+        display: flex;
+        padding: 10px;
+        justify-content: space-between;
+
+        >span{
+        display:inline-block;
+        width: 30px;
+        height: 20px;
+        color: white;
+        background-color: red;
+        border: 1px red;
+        text-align: center;
+        line-height: 20px;
+
+      }
+      }
+
+    }
+    #gz{
+      position: absolute;
+      top: 30px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+
+    }
+    .stage{
+
+      font-size: 0;
+      width: max-content;
+      border: 5px solid #bdbdbd;
+    }
+    button{
+      width: 25px;
+      height: 25px;
+      box-sizing: border-box;
+      border: 2px solid;
+      border-color: white #7b7b7b #7b7b7b white;
+      background-color: #bdbdbd;
+      font-size: 12px;
+      vertical-align: bottom;
+      padding: 0;
+      text-align: center;
+    }
+    button.blank,button.number{
+      border: 1px solid #7b7b7b;
+      border-width: 1px 0 0 1px;
+    }
+    button.unrevealed.active{
+      border: 1px solid #7b7b7b;
+      border-width: 1px 0 0 1px;
+    }
+    button[data-number="1"]{
+      color: blue;
+    }
+    button[data-number="2"]{
+      color: #007b00;
+    }
+    button[data-number="3"]{
+      color: red;
+    }
+    button[data-number="4"]{
+      color: #00007b;
+    }
+    button[data-number="5"]{
+      color: #7b0000;
+    }
+    button[data-number="6"]{
+      color: #007b7b;
+    }
+    button[data-number="7"]{
+      color: black;
+    }
+    button[data-number="8"]{
+      color: #7b7b7b;
+    }
+
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <button style="width: 70px; height: 20px; font-size: 12px;" onclick="start()">开始游戏</button>
+
+      <button style="width: 70px; height: 20px; font-size: 12px;" onclick="startAnow()">从新开始</button>
+      <span id="ju">0</span>
+    </section>
+    <div id="gz"></div>
+    <div class="stage">
+  </main>
+  </div>
+  <script>
+    var jyclick1
+    var jyclick2
+    class Minesweeper{
+      constructor(width=10,height=10){
+        this.boardWidth = width
+        this.boardHeight = height
+        this.board = new Array(this.boardHeight).fill(0).map(it => new Array(this.boardWidth).fill("E"))
+        this.flags = new Array(this.boardHeight).fill(0).map(it => new Array(this.boardWidth).fill(" "))
+      }
+      randomFilling(quantity = 10){
+        for(var i = 0;i<quantity;i++){
+          var row = this.boardWidth * Math.random() | 0
+          var col = this.boardHeight * Math.random() | 0
+          this.board[col][row] = "M"
+        }
+      }
+      updateBoard(board, click) {
+          var [r,c] = click
+          var char = board[r][c]
+          if(char == "M"){
+              board[r][c] = "X"
+              return board
+          }
+          if(char == "E"){
+              var mines = this.countMines(board,[r,c])
+              if(mines > 0){
+                  board[r][c] = String(mines)
+              }else{
+                 this.revealAdjacent(board,[r,c])
+              }
+                  return board
+          }
+      }
+      countMines(board,[r,c]){
+          var count = 0
+          for(var row =r-1;row<=r+1;row++){
+              for(var col = c -1;col <= c +1;col++ ){
+                  if(board[row]?.[col] == "M"){
+                      count++
+                  }
+              }
+          }
+          return count
+      }
+      countFlags(board,[r,c]){
+          var count = 0
+          for(var row =r-1;row<=r+1;row++){
+              for(var col = c -1;col <= c +1;col++ ){
+                  if(board[row]?.[col] == "P"){
+                      count++
+                  }
+              }
+          }
+          return count
+      }
+      revealAdjacent(board,[r,c]){
+          if(board[r][c] == "B") return
+          if(board[r][c] >= "1" && board[r][c] <= '8') return
+          var mines = this.countMines(board,[r,c])
+          if(mines == 0){
+            board[r][c] = "B"
+            for(var row =r-1;row<=r+1;row++){
+              for(var col = c -1;col <= c+1;col++ ){
+                  if(row >= 0 && row < board.length && col >= 0 && col < board[0].length ){
+                    this.revealAdjacent(board,[row,col])
+                  }
+              }
+          }
+          }else{
+              board[r][c] = String(mines)
+          }
+      }
+      render(){
+        return this.board.map((row,rowIdx) =>{
+          return row.map((cell,colIdx) => {
+            if(cell == 'E'){
+             return `<button class="unrevealed" data-flag="${this.flags[rowIdx][colIdx]}" data-row="${rowIdx}" data-col="${colIdx}">${this.flags[rowIdx][colIdx]}</button>`
+            }
+            if(cell == "M"){
+             return `<button class="unrevealed" data-flag="${this.flags[rowIdx][colIdx]}" data-row="${rowIdx}" data-col="${colIdx}">${this.flags[rowIdx][colIdx]}</button>`
+            }
+            if(cell == "B"){
+             return `<button data-row="${rowIdx}" data-col="${colIdx}" class="blank"></button>`
+            }
+            if(cell == "X"){
+             return `<button data-row="${rowIdx}" data-col="${colIdx}" class="mine">${cell}</button>`
+            }
+            if(cell >= "1" && cell <= "8"){
+             return `<button data-row="${rowIdx}" data-col="${colIdx}" data-number="${cell}" clas="number">${cell}</button>`
+            }
+          }).join("")
+        }).join("<br>")
+      }
+    }
+    var game = new Minesweeper()
+    var a = 0
+
+    var stage = document.querySelector(".stage")
+    stage.innerHTML = game.render()
+    var intervalId
+    function startAnow(){
+      game = new Minesweeper()
+      game.randomFilling()
+      gz.style.display = "none"
+      stage.innerHTML = game.render()
+      var s = 0
+      intervalId = setInterval(()=>{
+        s++
+        ju.textContent = s
+      },1000)
+    }
+
+    stage.addEventListener("contextmenu",e=>{
+      e.preventDefault()
+    })
+    stage.addEventListener("mouseup",jyclick2 = function(e){
+      if(e.which == 3 && e.target.matches("button")){
+        var button = e.target
+        var row = +button.dataset.row
+        var col = +button.dataset.col
+        var char = game.flags[row][col]
+        if(game.board[row][col] == "M" || game.board[row][col] == "E")
+        if(char == " "){
+          game.flags[row][col] = "P"
+        }else if(char == "P"){
+          game.flags[row][col] = "?"
+        }else if(char == "?"){
+          game.flags[row][col] = " "
+        }
+        stage.innerHTML = game.render()
+      }
+      if(e.which == 2 && e.target.matches("button")){
+        var button = e.target
+        var row = +button.dataset.row
+        var col = +button.dataset.col
+        var mines = +button.dataset.number
+        if(game.countFlags(game.flags,[row,col]) == mines){
+          for(var r = row - 1; r <= row + 1; r++){
+            for(var c = col - 1; c <= col + 1; c++ ){
+              if((game.board[r][c] == "E" || game.board[r][c] == "M") && game.flags[r]?.[c] !== "P"){
+                game.revealAdjacent(game.board,[r,c])
+              }
+            }
+          }
+        }
+        stage.innerHTML = game.render()
+      }
+      if(e.which == 1 && e.target.matches("button")){
+
+        var button = e.target
+        var row = +button.dataset.row
+        var col = +button.dataset.col
+        game.updateBoard(game.board,[row,col])
+
+        stage.innerHTML = game.render()
+        if(game.board[row][col] == "X"){
+
+          setTimeout(()=>{
+            for(var r = 0;r<game.board.length;r++){
+              for(var c= 0;c<= game.board[0].length;c++){
+                if(game.board[r][c] == "M"){
+                  game.board[r][c] = "X"
+                }
+              }
+            }
+
+            gz.style.display = "block"
+            stage.innerHTML = game.render()
+            setTimeout(()=>{
+              alert("over")
+            },16)
+
+          })
+          clearInterval(intervalId)
+        }
+        if(isOver()){
+          gz.style.display = "block"
+          setTimeout(()=>{
+            alert("你赢了")
+          })
+        }
+
+      }
+      e.preventDefault()
+    })
+    stage.addEventListener("mousedown",jyclick1 = function(e){
+      if(e.which == 2 && e.target.matches("button")){
+        stage.addEventListener("mousemove",stageMouseMove9)
+        var button = e.target
+        var row = +button.dataset.row
+        var col = +button.dataset.col
+        var buts = []
+        for(var r = row - 1; r <= row + 1; r++){
+            for(var c = col - 1; c <= col + 1; c++ ){
+              buts.push(document.querySelector(`.unrevealed:not([data-flag="P"])[data-row='${r}'][data-col='${c}']`))
+            }
+        }
+        buts.forEach(it =>{
+          it?.classList.add("active")
+        })
+      }
+      if(e.which == 1 && e.target.matches("button")){
+        if(a == 0){
+          game.randomFilling()
+          a++
+        }
+        stage.addEventListener("mousemove",stageMouseMove1)
+        var btn = e.target
+        btn.classList.add('active')
+      }
+    })
+    function stageMouseMove1(e){
+      var previousActivebuts = document.querySelector("button.active")
+      if(e.which == 0){
+        e.target.removeEventListener("mousemove",stageMouseMove1)
+        return
+      }
+      document.querySelector(".active")?.classList.remove("active")
+      e.target.classList.add('active')
+    }
+    function stageMouseMove9(e){
+      var previousActivebuts = document.querySelectorAll("button.active")
+      if(e.which == 0){
+        previousActivebuts.forEach(it=>{
+          it.classList.remove("active")
+        })
+        stage.removeEventListener("mousemove",stageMouseMove9)
+        return
+      }
+      if(e.which == 2 && e.target.matches("button")){
+
+        previousActivebuts.forEach(it=>{
+          it.classList.remove("active")
+        })
+        var button = e.target
+        var row = +button.dataset.row
+        var col = +button.dataset.col
+        var buts = []
+        for(var r = row - 1; r <= row + 1; r++){
+            for(var c = col - 1; c <= col + 1; c++ ){
+              buts.push(document.querySelector(`.unrevealed:not([data-flag="P"])[data-row='${r}'][data-col='${c}']`))
+            }
+        }
+        buts.forEach(it =>{
+          it?.classList.add("active")
+        })
+      }
+    }
+    function isOver (){
+      var ov = false
+      for(var r = 0;r<game.board.length;r++){
+          for(var c= 0;c<= game.board[0].length;c++){
+            if(game.board[r][c] == "E"){
+             return ov = false
+            }
+          }
+      }
+      return ov = true
+
+    }
+    function start(){
+
+      gz.style.display = "none"
+      var s = 0
+      intervalId = setInterval(()=>{
+        s++
+        ju.textContent = s
+      },1000)
+
+    }
+
+
+  </script>
+
+</body>
+</html>
